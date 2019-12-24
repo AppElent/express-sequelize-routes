@@ -1,6 +1,10 @@
 # Package starter
 
-# What is this?
+## What is this?
 
-Starter for NPM package containing babel, typescript, jest, etc.
+Sequelize REST routes for Express
+
+## How to install?
+`npm install --save express-sequelize-routes`
+
 
