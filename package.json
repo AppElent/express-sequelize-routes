@@ -23,7 +23,9 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint:fix",
     "preversion": "npm run lint:fix",
-    "publish:patch": "git add -A && git commit -m \"commit\" && npm version patch && npm publish"
+    "publish:patch": "git add -A && git commit -m \"commit\" && npm version patch && npm publish",
+    "publish:minor": "git add -A && git commit -m \"commit\" && npm version minor && npm publish",
+    "publish:major": "git add -A && git commit -m \"commit\" && npm version major && npm publish"
   },
   "devDependencies": {
     "@types/express": "^4.17.2",

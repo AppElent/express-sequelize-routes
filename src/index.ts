@@ -11,7 +11,7 @@ const checkOptions = (options: Options): void => {
     if (options.userColumnName && !options.reqUserProperty) {
         throw 'You have to specify both userColumnName and reqUserProperty';
     }
-    if(options.verbose === true){
+    if (options.verbose === true) {
         console.log('Options for sequelize: ', options);
     }
 };
@@ -106,17 +106,18 @@ export const create = (model: any, options: Options = { idColumnName: 'id' }) =>
     req: any,
     res: any,
 ): Promise<any> => {
+    console.log(0);
     try {
         //If no UID property on request object then return with forbidden error
         //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        console.log(999, 'test');
         checkOptions(options);
-
+        console.log(2);
         const body = req.body;
         if (options.userColumnName) {
             body[options.userColumnName] = req[options.reqUserProperty];
         }
-
-        console.log(body);
+        console.log(body, model);
         const entry = await model.create(body);
 
         return res.send({ success: true, data: entry });
@@ -198,8 +199,8 @@ export const destroy = (model: any, options: Options = { idColumnName: 'id' }) =
     //If no UID property on request object then return with forbidden error
     //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
     checkOptions(options);
-    const conditions: any = { where: { [req.params[options.userColumnName]]: req[options.reqUserProperty] } };
-    if (options.userColumnName !== null) {
+    const conditions: any = { where: { [options.idColumnName]: req.params[options.idColumnName] } };
+    if (options.userColumnName) {
         conditions.where[options.userColumnName] = req[options.reqUserProperty];
     }
 
@@ -207,6 +208,7 @@ export const destroy = (model: any, options: Options = { idColumnName: 'id' }) =
         await model.destroy(conditions);
         return res.send({ success: true, message: 'Deleted successfully' });
     } catch (err) {
+        console.log(err);
         return res.status(500).send({ success: false, message: err });
     }
 };
