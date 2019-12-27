@@ -22,7 +22,7 @@
     "lint:fix": "eslint --ext=jsx,ts,tsx,js src --fix",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint:fix",
-    "preversion": "npm run lint",
+    "preversion": "npm run lint:fix",
     "publish:patch": "git add -A && git commit -m \"commit\" && npm version patch && npm publish"
   },
   "devDependencies": {
