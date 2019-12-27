@@ -1,35 +1,40 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type Options = {
     idColumnName?: string;
     userColumnName?: string;
     cache?: any;
+    reqUserProperty?: string;
+    verbose?: boolean;
 };
 
-const getOptions = (options: Options): Options => {
-    if (options === undefined) options = {};
-    if (options.idColumnName === undefined) options.idColumnName = 'id';
-    if (options.userColumnName === undefined) options.userColumnName = 'userId';
-    return options;
+const checkOptions = (options: Options): void => {
+    if (options.userColumnName && !options.reqUserProperty) {
+        throw 'You have to specify both userColumnName and reqUserProperty';
+    }
+    if(options.verbose === true){
+        console.log('Options for sequelize: ', options);
+    }
 };
 
 /**
- * GET function. Returns 1 ID
+ * Get entry by ID
  * @param model
- * @param options
+ * @param options {Options}
  */
-export const get = (model, options: Options = {}): any => async (req, res) => {
+export const get = (model: any, options: Options = { idColumnName: 'id' }): any => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     try {
         //If no UID property on request object then return with forbidden error
-        if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        checkOptions(options);
+        const conditions = options.userColumnName
+            ? { where: { [req.params[options.userColumnName]]: req[options.reqUserProperty] } }
+            : {};
 
-        options = getOptions(options);
-        const entry = await model.findByPk(req.params[options.idColumnName]);
-        if (!entry) return res.status(404).send({ success: false, message: 'Niets gevonden' });
-        if (options.userColumnName !== null) {
-            if (entry[options.userColumnName] === undefined)
-                return res.status(401).send({ success: false, message: 'Geen user op model' });
-            if (entry[options.userColumnName] !== req.uid)
-                return res.status(401).send({ success: false, message: 'Niet toegestaan' });
-        }
+        const entry = await model.findByPk(req.params[options.idColumnName], conditions);
+        if (!entry) return res.status(404).send({ success: false, message: 'No records found' });
         return res.send({ success: true, data: entry });
     } catch (err) {
         return res.status(500).send({ success: false, message: err });
@@ -37,18 +42,22 @@ export const get = (model, options: Options = {}): any => async (req, res) => {
 };
 
 /**
- *
+ * Find single entry by column name
  * @param model
- * @param options
+ * @param options {Options}
  */
-export const find = (model, options: Options) => async (req, res) => {
+export const find = (model: any, options: Options = { idColumnName: 'id' }) => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     try {
         //If no UID property on request object then return with forbidden error
-        if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
 
-        options = getOptions(options);
-        const conditions = { where: { [req.params.column]: req.params.value } };
-        if (options.userColumnName !== null) conditions.where[options.userColumnName] = req.uid;
+        const conditions: any = { where: { [req.params.column]: req.params.value } };
+        if (options.userColumnName !== null) {
+            conditions.where[options.userColumnName] = req[options.reqUserProperty];
+        }
         const entry = await model.findOne(conditions);
         if (!entry) return res.status(404).send({ success: false, message: 'Niets gevonden' });
         return res.send({ success: true, data: entry });
@@ -58,17 +67,21 @@ export const find = (model, options: Options) => async (req, res) => {
 };
 
 /**
- *
- * @param model
- * @param options
+ * List all entries
+ * @param model sequelize model
+ * @param options {Options} options object
  */
-export const list = (model, options: Options) => async (req, res) => {
+export const list = (model: any, options: Options = { idColumnName: 'id' }) => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     try {
         //If no UID property on request object then return with forbidden error
-        if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
-
-        options = getOptions(options);
-        const conditions = { where: { [options.userColumnName]: req.uid } };
+        //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        checkOptions(options);
+        const conditions = options.userColumnName
+            ? { where: { [req.params[options.userColumnName]]: req[options.reqUserProperty] } }
+            : {};
 
         let entries = [];
         if (options.cache !== undefined) {
@@ -85,18 +98,24 @@ export const list = (model, options: Options) => async (req, res) => {
 };
 
 /**
- *
+ * Create entry
  * @param model
- * @param options
+ * @param options {Options}
  */
-export const create = (model, options: Options) => async (req, res) => {
+export const create = (model: any, options: Options = { idColumnName: 'id' }) => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     try {
         //If no UID property on request object then return with forbidden error
-        if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        checkOptions(options);
 
-        options = getOptions(options);
         const body = req.body;
-        body[options.userColumnName] = req.uid;
+        if (options.userColumnName) {
+            body[options.userColumnName] = req[options.reqUserProperty];
+        }
+
         console.log(body);
         const entry = await model.create(body);
 
@@ -107,19 +126,24 @@ export const create = (model, options: Options) => async (req, res) => {
 };
 
 /**
- *
+ * Update entry
  * @param model
- * @param options
+ * @param options {Options}
  */
-export const update = (model, options: Options) => async (req, res) => {
+export const update = (model: any, options: Options = { idColumnName: 'id' }) => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     try {
         //If no UID property on request object then return with forbidden error
-        if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
 
-        options = getOptions(options);
+        checkOptions(options);
         const body = req.body;
 
-        body[options.userColumnName] = req.uid;
+        if (options.userColumnName) {
+            body[options.userColumnName] = req[options.reqUserProperty];
+        }
         const entry = await model.update(body, { where: { [options.idColumnName]: req.params[options.idColumnName] } });
 
         return res.send({ success: true, data: entry });
@@ -129,19 +153,25 @@ export const update = (model, options: Options) => async (req, res) => {
 };
 
 /**
- *
+ * Create or update entry
  * @param model
- * @param options
+ * @param options {Options}
  */
-export const createOrUpdate = (model, options: Options) => async (req, res) => {
+export const createOrUpdate = (model: any, options: Options = { idColumnName: 'id' }) => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     try {
         //If no UID property on request object then return with forbidden error
-        if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+        //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
 
-        options = getOptions(options);
-
+        checkOptions(options);
         const conditions = req.body.conditions;
         const body = req.body.body;
+        if (options.userColumnName) {
+            conditions[options.userColumnName] = req[options.reqUserProperty];
+            body[options.userColumnName] = req[options.reqUserProperty];
+        }
         conditions[options.userColumnName] = req.uid;
         body[options.userColumnName] = req.uid;
         let entry = await model.findOne(conditions);
@@ -157,17 +187,26 @@ export const createOrUpdate = (model, options: Options) => async (req, res) => {
 };
 
 /**
- *
+ * Delete entry
  * @param model
- * @param options
+ * @param options {Options}
  */
-export const destroy = (model, options: Options) => async (req, res) => {
+export const destroy = (model: any, options: Options = { idColumnName: 'id' }) => async (
+    req: any,
+    res: any,
+): Promise<any> => {
     //If no UID property on request object then return with forbidden error
-    if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+    //if (req.uid === undefined) return res.status(401).send({ success: false, message: 'No token given' });
+    checkOptions(options);
+    const conditions: any = { where: { [req.params[options.userColumnName]]: req[options.reqUserProperty] } };
+    if (options.userColumnName !== null) {
+        conditions.where[options.userColumnName] = req[options.reqUserProperty];
+    }
 
-    options = getOptions(options);
-    model
-        .destroy({ where: { [options.idColumnName]: req.params[options.idColumnName] } })
-        .then(() => res.send({ success: true }))
-        .catch(err => res.status(500).send({ success: false, message: err }));
+    try {
+        await model.destroy(conditions);
+        return res.send({ success: true, message: 'Deleted successfully' });
+    } catch (err) {
+        return res.status(500).send({ success: false, message: err });
+    }
 };

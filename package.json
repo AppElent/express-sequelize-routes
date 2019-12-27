@@ -1,6 +1,6 @@
 {
   "name": "express-sequelize-routes",
-  "version": "0.1.0",
+  "version": "0.1.6",
   "description": "Sequelize routes for Express",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -21,10 +21,12 @@
     "lint": "eslint --ext=jsx,ts,tsx,js src",
     "lint:fix": "eslint --ext=jsx,ts,tsx,js src --fix",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint"
+    "prepublishOnly": "npm test && npm run lint:fix",
+    "preversion": "npm run lint",
+    "publish:patch": "git add -A && git commit -m \"commit\" && npm version patch && npm publish"
   },
   "devDependencies": {
+    "@types/express": "^4.17.2",
     "@types/jest": "^24.0.24",
     "@types/node": "^12.12.21",
     "@types/node-fetch": "^2.5.4",
@@ -35,6 +37,8 @@
     "eslint-plugin-prettier": "^3.1.2",
     "jest": "^24.9.0",
     "prettier": "^1.19.1",
+    "ts-jest": "^24.2.0",
     "typescript": "^3.7.3"
-  }
+  },
+  "dependencies": {}
 }
